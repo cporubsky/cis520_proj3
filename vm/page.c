@@ -51,10 +51,13 @@ page_for_addr (const void *address)
         return hash_entry (e, struct page, hash_elem);
 
       /* No page.  Expand stack? */
-
-/* add code */
-
-    }
+			/* add code here */
+			if(address > PHYS_BASE - STACK_MAX)
+        {
+				if(address >= thread_current()->user_esp - 32)
+					return page_allocate(address, false);
+				}
+     }
   return NULL;
 }
 
@@ -146,16 +149,33 @@ page_out (struct page *p)
      page. */
 
 /* add code here */
+  pagedir_clear_page( p->thread->pagedir, p->addr );
 
   /* Has the frame been modified? */
+  
+/* add code here */
+  dirty = pagedir_is_dirty( p->thread->pagedir, p->addr );
 
 /* add code here */
+	if(p->file != NULL)
+	{
+		if(dirty)
+		{
+			if(p->private)
+				ok = swap_out(p);
+			else
+				ok = file_write_at(p->file, p->frame->base, p->file_bytes, p->file_offset) == p->file_bytes;
+		}
+		else
+			ok = true;
+	}
+	else
+		ok = swap_out(p);
 
-  /* Write frame contents to disk if necessary. */
+	if(ok)
+		p->frame = NULL;
 
-/* add code here */
-
-  return ok;
+	return ok;
 }
 
 /* Returns true if page P's data has been accessed recently,
